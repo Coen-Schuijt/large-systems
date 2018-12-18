@@ -1,0 +1,13 @@
+{
+	"id": "nginx-test",
+	"cpus": 0.1,
+	"mem": 64.0,
+	"instances": 10,
+	"container": {
+		"type": "DOCKER",
+		"docker": {
+			"network": "HOST",
+			"image": "nginx"
+		}
+	}
+}
