@@ -38,6 +38,20 @@ def return_seconds(item):
         res_in_seconds = str(int_seconds) + res_stripped
         return res_in_seconds
 
+def calculate_average(array):
+    """
+    Calculates the average of a given array.
+    Takes   : An array of a given length
+    Returns : The average of the items in the array
+    """
+
+    # Initialize empty variable
+    result = 0
+    for item in array:
+        result += float(item)
+    final_result = result/len(array)
+    return final_result
+
 def parser(path):
     """
     Reads all the log files in the provided path and parses the time measurement results accordingly.
@@ -117,4 +131,24 @@ if __name__ == "__main__":
     print("Orchestration -- 100: ", orchestration_arr_100)
     print("Totals --------- 200: ", total_arr_200)
     print("Docker --------- 200: ", docker_arr_200)
-    print("Orchestration -- 200: ", orchestration_arr_200)
+    print("Orchestration -- 200: ", orchestration_arr_200,'\n')
+
+    avg_total_arr_10 = calculate_average(total_arr_10)
+    avg_docker_arr_10 = calculate_average(docker_arr_10)
+    avg_orchestration_arr_10 = calculate_average(orchestration_arr_10)
+    avg_total_arr_100 = calculate_average(total_arr_100)
+    avg_docker_arr_100 = calculate_average(docker_arr_100)
+    avg_orchestration_arr_100 = calculate_average(orchestration_arr_100)
+    avg_total_arr_200 = calculate_average(total_arr_200)
+    avg_docker_arr_200 = calculate_average(docker_arr_200)
+    avg_orchestration_arr_200 = calculate_average(orchestration_arr_200)
+
+    print("Average Total ----------- 10: ", avg_total_arr_10)
+    print("Average Docker ---------- 10: ", avg_docker_arr_10)
+    print("Average Orchestration --- 10: ", avg_orchestration_arr_10)
+    print("Average Total ---------- 100: ", avg_total_arr_100)
+    print("Average Docker --------- 100: ", avg_docker_arr_100)
+    print("Average Orchestration -- 100: ", avg_orchestration_arr_100)
+    print("Average Total ---------- 200: ", avg_total_arr_200)
+    print("Average Total ---------- 200: ", avg_docker_arr_200)
+    print("Average Total ---------- 200: ", avg_orchestration_arr_200)
