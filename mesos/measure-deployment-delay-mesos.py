@@ -149,7 +149,7 @@ if __name__ == "__main__":
     t5 = current_time()                
     print("[t5] All applications Running   : ", t5)
 
-    # [t5-t2] Orchestration + Docker Delay
+    # [t5-t2] Total application deployment delay (Orchestration + Docker Delay)
     total_delay = t5 - t2
     print("Total Delay                     : ", total_delay)
 
@@ -157,6 +157,6 @@ if __name__ == "__main__":
     docker_delay = t5 - t3
     print("Docker Delay                    : ", docker_delay)
 
-    # [t3-t2] Orchestration Delay
+    # [t3-t2] Container orchestration framework delay
     orchestration_delay = t3 - t2
     print("Orchestration Delay             : ", orchestration_delay)
