@@ -4,32 +4,44 @@ import os
 import sys
 import time
 import datetime
+import argparse
 import subprocess
 
 def get_args():
-    try:
-        replicas = sys.argv[1]
-        str_replicas = str(replicas)
-
-        application = sys.argv[2]
-        json = sys.argv[3]
-
-        outfile = sys.argv[4]
-        return str_replicas, application, json, outfile
-    except:
-        print("Wrong arguments. Usage:\n./spinup-deployment-delay.py rep app jsn out\nrep = Amount of replicas\napp = Application name\njsn = Relative path to json file\nout = Absolute path + filename (e.g. /root/performance_measurements_7.csv)")
-        sys.exit(1)
+    """
+    Function : Gets arguments from the command line
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("replicas", type=str, help="Specifies the number of replicas")
+    parser.add_argument("application", help="Specifies the application name")
+    parser.add_argument("json", help="Relative to JSON file with instructions")
+    parser.add_argument("outfile", help="Absolute path to output file")
+    args = parser.parse_args()
+    return args.replicas, args.application, args.json, args.outfile
 
 def current_time():
+    """
+    Function : Returns the current time
+    """
     current = datetime.datetime.now()
     return current
 
 def shutdown(application):
+    """
+    Function : Used to shut down any running application instances
+    Takes    : Application name
+    Reteruns : Timestamp after shutdown command
+    """
     os.system('curl -X DELETE http://145.100.104.111:7070/v2/apps/{} -H "Content-type: application/json"'.format(application))
     after_shutdown = current_time()
     return after_shutdown
 
 def deploy(json):
+    """
+    Function : Deploys application instances and returns timestamp after deployment command
+    Takes    : Relative path to JSON file with instructions
+    Returns  : Timestamp after deploy command
+    """
     before_deploy_command = current_time()
     os.system('curl -X POST http://145.100.104.111:7070/v2/apps -d @{} -H "Content-type: application/json"'.format(json))
 # works    #os.system('curl -X POST http://145.100.104.111:7070/v2/apps -d @{} -H "Content-type: application/json"'.format(json))
@@ -37,6 +49,10 @@ def deploy(json):
     return after_deploy_command
 
 def start_resource_monitor(server_definition,outfile):
+    """
+    Function : Starts resource monitring
+    Takes    : List of server:port combination, output file name 
+    """
     for server,port in server_definition.items():
 #        print("Server: ", server)
 #        print("Port  : ", port)
@@ -44,6 +60,10 @@ def start_resource_monitor(server_definition,outfile):
         os.system("ssh -i /root/.ssh/remote/id_ed25519 root@{0} -p {1} 'dstat -cdmnyg --disk-util --disk-tps --output {2} < /dev/null > /dev/null 2>&1 &'".format(server,port,outfile))
 
 def stop_resource_monitor(server_definition):
+    """
+    Function : Gathers PID's for dstat processes on servers and kills those processes
+    Takes    : List of server:port combinations
+    """
     first = '{print "kill " $1}'
     for server,port in server_definition.items():
         pid = subprocess.check_output("ssh -i /root/.ssh/remote/id_ed25519 root@{0} -p {1} ps -axf | grep dstat | grep -v grep | awk '{2}'".format(server,port,first), shell=True)
@@ -51,11 +71,11 @@ def stop_resource_monitor(server_definition):
         pid_decoded = pid.decode("utf-8")
         pid_str = str(pid_decoded)
         
-        print("Pid", pid_str)
+        #print("Pid", pid_str)
 
         pid_splitted = pid_str.split("\n")
         del pid_splitted[-1]
-        print("Pid splitted", pid_splitted)
+        #print("Pid splitted", pid_splitted)
 
         if server == "145.100.104.111":
             del pid_splitted[0]
@@ -75,7 +95,10 @@ def stop_resource_monitor(server_definition):
 #            print(item)
 
 def monitor_replicas(amount,application):
-
+    """
+    Function : Monitors the amount of application instances in 'running' state
+    Takes    : Amount of application instances to check for, application instance name
+    """
     before_monitor = current_time()
     while True:
         output = subprocess.check_output('curl -X GET http://145.100.104.111:7070/v2/apps/{}/tasks -H "Content-type: application/json" | python -m json.tool | grep TASK_RUNNING | wc -l'.format(application), shell=True)
@@ -119,7 +142,7 @@ if __name__ == "__main__":
 
     # Insert a 5 sec sleep, so the shutdown command doesn't interfere with deploy command.
     if replicas == '10':
-        time.sleep(10)
+        time.sleep(15)
     elif replicas == '100':
         time.sleep(80)
     elif replicas == '200':
