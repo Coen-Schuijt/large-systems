@@ -2,23 +2,23 @@
 
 import os
 import sys
+import argparse
 
 def get_args():
-    """Gets the arguments from the command line"""
-    try:
-        path = sys.argv[1]
-        return path
-    except:
-        print("Wrong arguments. Usage:\n./parse.py dir\ndir = Relative path to csv files")
-        sys.exit(1)
+    """
+    Function : Gets the arguments from the command line
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path", type=str, help="Absolute path to directory with log files")
+    args = parser.parse_args()
+    return args.path
 
 def return_seconds(item):
     """
-    Function that splits the first part of the time mesurements, and returns the result in seconds.
-    Takes  : Time measurement in the format [mm:ss.ffffff]
-    Returns: Time measurement in the format   [sss.ffffff]
+    Function : Splits the first part of the time mesurements, and returns the result in seconds.
+    Takes    : Time measurement in the format [mm:ss.ffffff]
+    Returns  : Time measurement in the format   [sss.ffffff]
     """
-
     # Parse minutes and seconds
     minutes = item[0:2]
     int_minutes = int(minutes)
@@ -44,8 +44,6 @@ def calculate_average(array):
     Takes   : An array of a given length
     Returns : The average of the items in the array
     """
-
-    # Initialize empty variable
     result = 0
     for item in array:
         result += float(item)
@@ -58,7 +56,6 @@ def parser(path):
     Takes   : Relative pat to the log files
     Returns : Several arrays with parsed results
     """
-   
     # Initialize empty arrays
     total_arr_10 = []
     docker_arr_10 = []
@@ -79,15 +76,21 @@ def parser(path):
             if '_10_' in entry:
                 with open(path + '/' + entry, 'r') as f_10:
                     data = f_10.readlines()
+                    # Last three lines are of interest
                     stripped_data = data[-3:]
                     for e,item in enumerate(stripped_data):
+                        # Split newlins
                         result_10 = item.replace('\n','')
+                        # Get the timestamp and return in seconds
                         before_comma_10 = result_10[-12:]
                         result_10 = return_seconds(before_comma_10)
+                        # Append to total array
                         if e == 0:
                             total_arr_10.append(result_10)
+                        # Append to docker array
                         elif e == 1:
                             docker_arr_10.append(result_10)
+                        # Append to orchestration array
                         elif e == 2:
                             orchestration_arr_10.append(result_10)
             elif '_100_' in entry:

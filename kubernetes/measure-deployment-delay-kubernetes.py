@@ -3,39 +3,55 @@
 import os
 import sys
 import datetime
+import argparse
 import subprocess
 
 def get_args():
-    try:
-        replicas = sys.argv[1]
-        str_replicas = str(replicas)
-
-        application = sys.argv[2]
-        yaml = sys.argv[3]
-
-        outfile = sys.argv[4]
-        return str_replicas, application, yaml, outfile
-    except:
-        print("Wrong arguments. Usage:\n./spinup-deployment-delay.py rep app yml out\nrep = Amount of replicas\napp = Application name\nyml = Relative path to yaml file\nout = Absolute path + filename (e.g. /root/performance_measurements_7.csv)")
-        sys.exit(1)
+    """
+    Function : Gets arguments from the command line
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("replicas", type=str, help="Specifies the number of replicas")
+    parser.add_argument("application", help="Specifies the application name")
+    parser.add_argument("yaml", help="Relative path + yaml filename (e.g. ../nginx_yaml/nginx-deployment-10.yml)")
+    parser.add_argument("outfile", help="Absolute path + filename (e.g. /var/log/dstat/nginx-deployment-10.csv)")
+    args = parser.parse_args()
+    return args.replicas, args.application, args.yaml, args.outfile
 
 def current_time():
+    """
+    Function : Returns the current time
+    """
     current = datetime.datetime.now()
     return current
 
 def shutdown(application):
+    """
+    Function : Used to shut down any running application instances
+    Takes    : Application name
+    Returns  : Timestamp after shutdown command
+    """
     os.system("kubectl delete deployment.apps/{}".format(application))
     os.system("kubectl delete pods --selector=app={}".format(application))
     after_shutdown = current_time()
     return after_shutdown
 
 def deploy(yaml):
+    """
+    Function : Deploys application instances and returns timestamp after deployment command
+    Takes    : Relative path to YAML file with instructions
+    Returns  : Timestamp after deploy command
+    """
     before_deploy_command = current_time()
     os.system("kubectl create -f {}".format(yaml))
     after_deploy_command = current_time()
     return after_deploy_command
 
 def start_resource_monitor(server_definition,outfile):
+    """
+    Function : Starts resource monitring
+    Takes    : List of server:port combination, output file name 
+    """
     for server,port in server_definition.items():
 #        print("Server: ", server)
 #        print("Port  : ", port)
@@ -43,6 +59,10 @@ def start_resource_monitor(server_definition,outfile):
         os.system("ssh -i /root/.ssh/remote/id_ed25519 root@{0} -p {1} 'dstat -cdmnyg --disk-util --disk-tps --output {2} < /dev/null > /dev/null 2>&1 &'".format(server,port,outfile))
 
 def stop_resource_monitor(server_definition):
+    """
+    Function : Gathers PID's for dstat processes on servers and kills those processes
+    Takes    : List of server:port combinations
+    """
     first = '{print "kill " $1}'
     for server,port in server_definition.items():
         pid = subprocess.check_output("ssh -i /root/.ssh/remote/id_ed25519 root@{0} -p {1} ps -axf | grep dstat | grep -v grep | awk '{2}'".format(server,port,first), shell=True)
@@ -74,7 +94,10 @@ def stop_resource_monitor(server_definition):
 #            print(item)
 
 def monitor_replicas(amount,application):
-
+    """
+    Function : Monitors the amount of application instances in 'running' state
+    Takes    : Amount of application instances to check for, application instance name
+    """
     before_monitor = current_time()
     while True:
         output = subprocess.check_output("kubectl get pods --selector=app={} --field-selector=status.phase=Running | tail -n +2 | wc -l".format(application), shell=True)
